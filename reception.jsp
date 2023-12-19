@@ -1,46 +1,48 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*" %>
-<%@ page import="javax.sql.DataSource" %>
-<%@ page import="javax.naming.Context" %>
-<%@ page import="javax.naming.InitialContext" %>
 
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Réception des Données</title>
+    <title>Connexion à MySQL via JSP</title>
 </head>
 <body>
+    <h1>Exemple de connexion à MySQL via JSP</h1>
+    <% 
+    String url = "jdbc:mariadb://localhost:3306/films";
+    String user = "mysql";
+    String password = "mysql";
 
-<%
-    // Récupération des données du formulaire
-    String annee = request.getParameter("annee");
+        // Charger le pilote JDBC
+        Class.forName("org.mariadb.jdbc.Driver");
 
-    // Validation et traitement des données
-    if (annee != null && !annee.isEmpty()) {
-        // Configuration de la source de données (à adapter en fonction de votre configuration)
-        String jdbcResource = "jdbc/NomDeVotreDataSource"; // Remplacez par le nom de votre source de données JNDI
-        Context context = new InitialContext();
-        DataSource dataSource = (DataSource) context.lookup(jdbcResource);
+        //Réccupération du POST
+        String SaisieUser = request.getParameter("saisie");
+        //Conversion en int
+        int annee;
+        annee = Integer.parseInt(SaisieUser);
 
-        // Connexion à la base de données
-        try (Connection connection = dataSource.getConnection()) {
-            // Exécution de la requête SQL pour insérer les données dans la base de données
-            String sql = "INSERT INTO VotreTable (annee) VALUES (?)";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setInt(1, Integer.parseInt(annee));
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                out.println("Erreur lors de l'exécution de la requête : " + e.getMessage());
-            }
+        // Établir la connexion
+Connection conn = DriverManager.getConnection(url, user, password);
+            // Exemple de requête SQL
+        String sql = "SELECT idFilm, titre, année FROM Film WHERE année >= "+annee;
+        PreparedStatement pstmt = conn.prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery();
 
-            out.println("<h2>Données enregistrées avec succès !</h2>");
-        } catch (SQLException e) {
-            out.println("Erreur lors de la connexion à la base de données : " + e.getMessage());
+        // Afficher les résultats (à adapter selon vos besoins)
+        while (rs.next()) {
+            String colonne1 = rs.getString("idFilm");
+            String colonne2 = rs.getString("titre");
+            String colonne3 = rs.getString("année");
+            // Faites ce que vous voulez avec les données...
+            //Exemple d'affichage de 2 colonnes
+            out.println("id : " + colonne1 + ", titre : " + colonne2 + ", année : " + colonne3 + "</br>");
         }
-    } else {
-        out.println("<h2>Erreur : Champ 'annee' vide</h2>");
-    }
-%>
 
+        // Fermer les ressources 
+        rs.close();
+        pstmt.close();
+        conn.close();
+    %>
 </body>
 </html>
